@@ -52,7 +52,6 @@ function createFileManagerPage() {
       'post_name' => $slug,
       'post_type' => 'page',
       'post_status' => 'publish',
-      'post_password' => '12345',
       'post_title' => 'File Manager',
       'post_content' => ''
     );
@@ -69,15 +68,11 @@ function unpublishFileManagerPage() {
     'post_type' => 'page',
     'post_status' => 'publish'
   ));
-  //CASE File Manager Page is published: change status to draft
+  //CASE File Manager Page is published: delete page
   if($queryFileManagerPagesPublished->have_posts()) {
     while($queryFileManagerPagesPublished->have_posts()) {
       $queryFileManagerPagesPublished->the_post();
-      $updatePost = array(
-        'ID' => get_the_ID(),
-        'post_status' => 'draft'
-      );
-      wp_update_post($updatePost);
+      wp_delete_post(get_the_ID(), true);
     }
   }
 }
@@ -85,14 +80,26 @@ function unpublishFileManagerPage() {
 
 function copyPageFileManagerIntoThemeFolder() {
 
-  $plugin_dir = plugin_dir_path( __FILE__ ) . 'copy-to-themes/page-file-manager.php';
-  $theme_dir = get_stylesheet_directory() . '/page-file-manager.php';
+  $filename = 'page-file-manager.php';
+  $plugin_dir = plugin_dir_path( __FILE__ ) . 'copy-to-themes/' . $filename;
+  $theme_dir = get_stylesheet_directory() . '/' . $filename;
 
   if (!copy($plugin_dir, $theme_dir)) {
       echo "failed to copy $plugin_dir to $theme_dir...\n";
   }
 }
 
+
+function deletePageFileManagerFromThemeFolder() {
+  
+  $filename = 'page-file-manager.php';
+  $theme_dir = get_stylesheet_directory() . '/' . $filename;
+  if (unlink($theme_dir)) {
+    echo 'The file ' . $theme_dir . ' was deleted successfully!';
+  } else {
+    echo 'There was a error deleting the file ' . $theme_dir;
+  }
+}
 
 
 function createCustomPostTypeFileContainer() {
@@ -165,7 +172,6 @@ function filemanager_scripts() {
 }
 
 
-
 function addTypeModuleAttributeToJavascript($tag, $handle) {
   if ( $handle !== 'main-filemanager-js' ) {
      return $tag;
@@ -186,7 +192,7 @@ function onPluginActivationTasks() {
   // create password-protected file manager page (if it does not exist as a published page)
   createFileManagerPage();
 
-
+  // copy page for File Manager from plugin to current Themes folder
   copyPageFileManagerIntoThemeFolder();
   
 }
@@ -197,8 +203,8 @@ function onPluginDeactivationTasks() {
   // unpublish file manager page (change to draft)
   unpublishFileManagerPage();
 
-  // DON'T UNREGISTER CUSTOM POST TYPES (TO DO: need to check what will happen to post data)
-
+  // delete copied page for File Manager from current Themes folder
+  deletePageFileManagerFromThemeFolder();
 }
 
 
@@ -216,11 +222,11 @@ register_deactivation_hook( __FILE__, 'onPluginDeactivationTasks' );
 // register custom post types
 add_action( 'init', 'createCustomPostTypeFileContainer', 1 );
 
-// enqueue scripts
+// enqueue scripts (Eg. js, css)
 add_action('wp_enqueue_scripts', 'filemanager_scripts');
 
 // Fix Error of "Uncaught SyntaxError: Cannot use import statement outside a module"
 add_filter('script_loader_tag', 'addTypeModuleAttributeToJavascript', 10, 2);
 
-
+// upload feature using acf_form to add file to custom field
 add_filter('acf/pre_save_post' , 'uploadFileContainer');
