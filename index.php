@@ -9,10 +9,98 @@
  */
 
 
- if( !defined( 'ABSPATH' ) ) exit; //exit if accessed directly
+if( !defined( 'ABSPATH' ) ) exit; //exit if accessed directly
 
- require plugin_dir_path(__FILE__) . 'require/file-repository-route.php';
 
+/*----------------------------------------------------------------------------------------------------------
+  --------------------------------------- REQUIRE REQUIREMENTS ---------------------------------------------
+  ---------------------------------------------------------------------------------------------------------- */
+
+require_once plugin_dir_path(__FILE__) . 'require/file-repository-route.php';
+
+if ( ! function_exists( 'is_plugin_active' ) ) {
+  include_once ABSPATH . 'wp-admin/includes/plugin.php';
+}
+
+// Check if ACF PRO is active
+if ( is_plugin_active( 'advanced-custom-fields-pro/acf.php' ) ) {
+  // Abort all bundling, ACF PRO plugin takes priority
+  return;
+}
+
+// Check if another plugin or theme has bundled ACF
+if ( defined( 'MY_ACF_PATH' ) ) {
+  return;
+}
+
+// Define path and URL to the ACF plugin.
+define( 'MY_ACF_PATH', __DIR__ . '/require/acf/' );
+define( 'MY_ACF_URL', plugin_dir_url( __FILE__ ) . 'require/acf/' );
+
+// Require the ACF plugin.
+require_once( MY_ACF_PATH . 'acf.php' );
+
+
+
+/*----------------------------------------------------------------------------------------------------------
+  ----------------------------------------- CUSTOM FUNCTIONS -----------------------------------------------
+  ---------------------------------------------------------------------------------------------------------- */
+
+// Customize the URL setting to fix incorrect asset URLs.
+function my_acf_settings_url( $url ) {
+  return MY_ACF_URL;
+}
+
+function addNewFieldGroupsToACF() {
+	if ( ! function_exists( 'acf_add_local_field_group' ) ) {
+		return;
+	}
+
+	acf_add_local_field_group( array(
+    'key' => 'group_65e124aec23e8',
+    'title' => 'File Document',
+    'fields' => array(
+      array(
+        'key' => 'field_65e124afb39ef',
+        'label' => 'File',
+        'name' => 'file',
+        'aria-label' => '',
+        'type' => 'file',
+        'instructions' => '',
+        'required' => 0,
+        'conditional_logic' => 0,
+        'wrapper' => array(
+          'width' => '',
+          'class' => '',
+          'id' => '',
+        ),
+        'return_format' => 'array',
+        'library' => 'uploadedTo',
+        'min_size' => '',
+        'max_size' => 100,
+        'mime_types' => '',
+      ),
+    ),
+    'location' => array(
+      array(
+        array(
+          'param' => 'post_type',
+          'operator' => '==',
+          'value' => 'filecontainer',
+        ),
+      ),
+    ),
+    'menu_order' => 0,
+    'position' => 'normal',
+    'style' => 'default',
+    'label_placement' => 'top',
+    'instruction_placement' => 'label',
+    'hide_on_screen' => '',
+    'active' => true,
+    'description' => '',
+    'show_in_rest' => 0,
+  ) );
+}
 
 
 
@@ -230,3 +318,15 @@ add_filter('script_loader_tag', 'addTypeModuleAttributeToJavascript', 10, 2);
 
 // upload feature using acf_form to add file to custom field
 add_filter('acf/pre_save_post' , 'uploadFileContainer');
+
+// add ACF URL being used to ACF settings
+add_filter('acf/settings/url', 'my_acf_settings_url');
+
+// ACF free is not installed, hide ACF admin menu item and ACF Updates menu
+if ( ! file_exists( WP_PLUGIN_DIR . '/advanced-custom-fields/acf.php' ) ) {
+  add_filter( 'acf/settings/show_admin', '__return_false' );
+  add_filter( 'acf/settings/show_updates', '__return_false', 100 );
+}
+
+// add new Field Groups to ACF
+add_action( 'acf/include_fields', 'addNewFieldGroupsToACF' );
