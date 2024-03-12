@@ -69,10 +69,10 @@ while (have_posts()) {
                 <i class="fa fa-pencil" aria-hidden=true></i>
                 <a href="<?php echo $file['url'] ?>" download><?php echo $file['filename']; ?></a>
               </span>
-              <span class="delete-file">
-                <i class="fa fa-trash-o" aria-hidden=true></i>Delete
-              </span>
-            <?php endif; ?>
+              <?php endif; ?>
+            <span class="delete-file">
+              <i class="fa fa-trash-o" aria-hidden=true></i>Delete
+            </span>
           </li>
         <?php }
       ?>
