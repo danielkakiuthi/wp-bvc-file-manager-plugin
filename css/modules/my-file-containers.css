@@ -55,13 +55,15 @@ h2 {
 
 /* Form Submit Button Styling */
 .acf-form input[type="submit"] {
-  width: 100%; /* Make button full width */
-  padding: 10px; /* Add padding */
+  width: auto; /* Make button full width */
+  padding: 10px 20px; /* Add padding */
   background-color: #007bff; /* Button background color */
   color: #fff; /* Text color */
   border: none; /* Remove border */
   border-radius: 4px; /* Add border radius */
   cursor: pointer; /* Change cursor to pointer on hover */
+  display: block; 
+  margin: 0 auto;
 }
 
 /* Form Submit Button Hover Effect */
@@ -119,4 +121,41 @@ h2 {
 /* Footer Styling */
 footer {
   margin-top: 40px; 
+}
+
+/* Table Styling */
+.file-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.file-table th,
+.file-table td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.file-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.file-table a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.file-table a:hover {
+  text-decoration: underline;
+}
+
+.file-table .delete-file {
+  color: red;
+  cursor: pointer;
+}
+
+.file-table .delete-file:hover {
+  text-decoration: underline;
 }

@@ -46,37 +46,49 @@ while (have_posts()) {
 
     <!-- Display files from current user -->
     <h4>My files list:</h4>
-    <ul class="min-list link-list" id="my-file-containers">
-      <?php 
-        $queryFileContainers = new WP_Query(array(
-          'post_type'=> 'fileContainer',
-          'posts_per_page' => -1,
-          'author' => get_current_user_id()
-        ));
-        while($queryFileContainers->have_posts()) {
-          $queryFileContainers->the_post(); 
-          $publishedDate = get_post_datetime( get_sub_field('document')['id'], 'modified', 'gmt' );
-          ?>
-          <li data-container="<?php the_ID(); ?>">
-            <h4 readonly class="file-title-field" type="text"><?php echo str_replace('Private: ', '', esc_attr(get_the_title())); ?></h4>
-            <span>Upload Date: <?php echo $publishedDate->format( 'Y-m-d H:i:s' ) ?></span>
-            </br>
-            <?php   
-            $file = get_field('file');
-            if($file): ?>
-              <span>Download Link: </span>
-              <span class="download-file">
-                <i class="fa fa-pencil" aria-hidden=true></i>
-                <a href="<?php echo $file['url'] ?>" download><?php echo $file['filename']; ?></a>
-              </span>
-              <?php endif; ?>
-            <span class="delete-file">
-              <i class="fa fa-trash-o" aria-hidden=true></i>Delete
+    <table class="file-table">
+  <thead>
+    <tr>
+      <th>File Name</th>
+      <th>Upload Date</th>
+      <th>Uploaded By</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <?php
+    $queryFileContainers = new WP_Query(array(
+      'post_type' => 'fileContainer',
+      'posts_per_page' => -1,
+      'author' => get_current_user_id()
+    ));
+    while ($queryFileContainers->have_posts()) {
+      $queryFileContainers->the_post();
+      $publishedDate = get_post_datetime(get_sub_field('document')['id'], 'modified', 'gmt');
+    ?>
+      <tr>
+        <td>
+          <?php
+          $file = get_field('file');
+          if ($file) : ?>
+            <span class="download-file">
+              <i class="fa fa-download" aria-hidden="true"></i>
+              <a href="<?php echo $file['url'] ?>" download><?php echo $file['filename']; ?></a>
             </span>
-          </li>
-        <?php }
-      ?>
-    </ul>
+          <?php endif; ?>
+        </td>
+        <td><?php echo $publishedDate->format('Y-m-d H:i:s') ?></td>
+        <td><?php the_author(); ?></td>
+        <td>
+          <span class="delete-file">
+            <i class="fa fa-trash-o" aria-hidden=true></i>Delete
+          </span>
+        </td>
+      </tr>
+    <?php }
+    ?>
+  </tbody>
+</table>
 
   </div>
 
