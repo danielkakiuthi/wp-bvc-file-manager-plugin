@@ -46,7 +46,7 @@ class FileManager {
 
   deleteFileContainer(e) {
     console.log("deleteFileContainer was called");
-    var fileContainerBoxToDelete = jQuery(e.target).closest("li");
+    var fileContainerBoxToDelete = jQuery(e.target).closest("tr");
 
     jQuery.ajax({
       beforeSend: (xhr) => {

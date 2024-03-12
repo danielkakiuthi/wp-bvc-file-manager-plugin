@@ -3,7 +3,7 @@
 /**
  * Plugin Name: WP BVC - File Manager
  * Description: Implementation of a file manager
- * Version: 1.2
+ * Version: 1.3
  * Author: BVC
  * Author URI: https://github.com/danielkakiuthi/wp-bvc-file-manager-plugin
  */

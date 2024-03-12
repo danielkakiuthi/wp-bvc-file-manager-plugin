@@ -46,7 +46,7 @@ while (have_posts()) {
 
     <!-- Display files from current user -->
     <h4>My files list:</h4>
-    <table class="file-table">
+    <table id="my-file-containers" class="file-table">
   <thead>
     <tr>
       <th>File Name</th>
