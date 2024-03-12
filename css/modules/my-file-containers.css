@@ -1,157 +1,122 @@
-/* My File Containers */
-.download-file,
-.delete-file,
-.submit-file {
-  font-size: 0.9rem;
-  background-color: #eee;
-  padding: 8px 16px;
+/* Body Styling */
+body {
+  font-family: "Roboto", sans-serif;
+}
+
+/*Header Style*/
+
+.ast-primary-header-bar.ast-primary-header.main-header-bar.site-header-focus-item{
+  background-color: #1a1a1a;
+}
+
+/* Main Container */
+.container {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 20px;
+  position: relative;
+}
+
+
+/* Title Styling */
+h2 {
+  margin-top: 40px; /* Add margin-top for spacing */
+  font-size: 2rem; /* Increase font size */
+  color: var(--mainBlue); /* Set text color */
+  text-transform: uppercase; /* Convert text to uppercase */
+  font-weight: bold; /* Add font weight */
+  text-align: center; /* Center align text */
+  border-bottom: 2px solid var(--mainBlue); /* Add bottom border */
+  padding-bottom: 10px; /* Add padding to bottom */
+}
+
+/* Form Styling  AKA File Selection*/
+.acf-form {
+  margin: 0 auto; /* Center the form */
+  max-width: 600px; /* Limit the width of the form */
+  padding: 20px; /* Add padding */
+  background-color: #f9f9f9; /* Light background color */
+  border-radius: 8px; /* Add border radius for rounded corners */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Add box shadow for depth */
+}
+
+/* Form Inputs Styling */
+.acf-form input[type="text"],
+.acf-form input[type="email"],
+.acf-form input[type="password"],
+.acf-form textarea {
+  width: 100%; /* Make inputs full width */
+  padding: 10px; /* Add padding */
+  margin-bottom: 20px; /* Add space between inputs */
+  border: 1px solid #ccc; /* Add border */
+  border-radius: 4px; /* Add border radius */
+  box-sizing: border-box; /* Include padding and border in width calculation */
+}
+
+/* Form Submit Button Styling */
+.acf-form input[type="submit"] {
+  width: 100%; /* Make button full width */
+  padding: 10px; /* Add padding */
+  background-color: #007bff; /* Button background color */
+  color: #fff; /* Text color */
+  border: none; /* Remove border */
+  border-radius: 4px; /* Add border radius */
+  cursor: pointer; /* Change cursor to pointer on hover */
+}
+
+/* Form Submit Button Hover Effect */
+.acf-form input[type="submit"]:hover {
+  background-color: #0056b3; /* Darken background color on hover */
+}
+
+
+/* File List Styling */
+.min-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px; 
+}
+
+/* File Item Styling */
+.min-list li {
+  margin-bottom: 20px; 
+}
+
+/* File Title Styling */
+.file-title-field {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--mainBlue);
+  margin-bottom: 10px;
+}
+
+/* Upload Date Styling */
+.upload-date {
+  color: #888;
+}
+
+/* Download Link Styling */
+.download-file {
   display: inline-block;
-  margin-right: 7px;
-  border-radius: 4px;
+  margin-right: 10px; 
+}
+
+/* Delete Link Styling */
+.delete-file {
+  display: inline-block;
+  color: red; 
+  margin-left: 10px;
   cursor: pointer;
 }
 
-.submit-file {
-  color: #fff;
-  border: none;
-  background-color: var(--darkOrange);
-  line-height: 1.65;
-}
-
-.submit-file:hover {
-  background-color: var(--darkOrange);
-}
-
-.download-file,
-.delete-file {
-  @media (min-width: 635px) {
-    position: relative;
-    top: -12px;
-  }
-}
-
-.download-file:hover,
+/* Delete Link Hover Effect */
 .delete-file:hover {
-  background-color: #ddd;
+  text-decoration: underline; 
 }
 
-.delete-file {
-  color: red;
-}
 
-.update-file {
-  visibility: hidden;
-}
 
-.update-file--visible {
-  visibility: visible;
-}
-
-.file-title-field {
-  width: 40%;
-  font-size: medium;
-  font-family: "Roboto Condensed", sans-serif;
-  font-weight: 300;
-  color: var(--mainBlue);
-  border: 1px solid transparent;
-  padding: 7px;
-  outline: none;
-  position: relative;
-  top: 1px;
-
-  @media (max-width: 400px) {
-    width: 100%;
-  }
-
-  @media (min-width: 635px) {
-    width: 65%;
-    font-size: 3.125rem;
-  }
-}
-
-.file-body-field {
-  color: #333;
-  font-family: "Roboto", sans-serif;
-  resize: none;
-  display: block;
-  width: 100%;
-  line-height: 1.65;
-  font-size: 1.15rem;
-  padding: 7px;
-  border: 1px solid transparent;
-  height: 175px;
-  outline: none;
-}
-
-.file-active-field {
-  border: 1px solid #ddd;
-  animation: pulseBorder 0.75s alternate infinite;
-}
-
-@keyframes pulseBorder {
-  0% {
-    border: 1px solid #fff;
-  }
-
-  100% {
-    border: 1px solid #ccc;
-  }
-}
-
-/* Create File */
-.create-file {
-  background-color: #ddd;
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
-.new-file-title {
-  width: 100%;
-  padding: 10px;
-  font-family: "Roboto", sans-serif;
-  border: none;
-  margin-bottom: 10px;
-  font-size: 1.15rem;
-  box-sizing: border-box;
-}
-
-.new-file-body {
-  width: 100%;
-  box-sizing: border-box;
-  resize: none;
-  padding: 10px;
-  font-family: "Roboto", sans-serif;
-  border: none;
-  margin-bottom: 10px;
-  height: 170px;
-  font-size: 1.15rem;
-  line-height: 1.65;
-}
-
-/* Reveal and Hide Fade Transitions */
-#my-file-containers {
-  position: relative;
-}
-
-#my-file-containers li {
-  transition: all 0.4s ease-out;
-  opacity: 1;
-}
-
-#my-file-containers li.fade-out {
-  height: 0px !important;
-  overflow: hidden !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  opacity: 0.5;
-}
-
-#my-file-containers li.fade-in-calc {
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-  position: absolute;
-  left: 0;
-  right: 0;
-  opacity: 0;
+/* Footer Styling */
+footer {
+  margin-top: 40px; 
 }
