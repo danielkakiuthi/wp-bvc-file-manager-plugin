@@ -1,0 +1,51 @@
+form.afmshortcodegenerator label.error, label.error {
+    color: red;
+    font-style: italic;
+    margin-left: 10px;
+}
+.afm_operation_table label.error {
+ float: right;
+}
+form.afmshortcodegenerator input.error, form.afmshortcodegenerator textarea.error  {
+    border: 2px dotted red;
+}
+
+.afm-shortcodes-listing {
+    background:#fff; 
+    padding: 20px; 
+    border:1px solid #ccc;
+}
+.afm-shortcodes-listing a {
+ text-decoration: none;
+ color: #000;
+}
+.afm-shortcodes-listing .active {
+    color: #0cb30c;
+}
+.afm-shortcodes-listing .inactive {
+    color: #ef1d1d;
+}
+.afm-shortcodes-listing #afm_shortcode_list_length select {
+    padding: 0 15px !important;
+}
+.afm_main_bg {
+    background:#fff; 
+    padding: 20px; 
+    border:1px solid #ccc;
+}
+
+.afm_code {
+    color: #ef1d1d;
+}
+.afm_filter_shortcode {
+color: darkgoldenrod !important;
+}
+.afm_edit_shortcode {
+    color: rgb(10, 143, 8) !important;
+}
+.afm_delete_shortcode {
+    color: #ef1d1d !important;
+}
+.afm_operation_table th, .afm_operation_table td {
+    padding: 0 !important;
+}

@@ -1,0 +1,726 @@
+<?php
+/*
+@package: File Manager Advanced
+@Class: class_fma_shortcode_secure
+*/
+if(!class_exists('class_fma_main')) {
+    return;
+}
+if(class_exists('class_fma_shortcode_secure')) {
+    return;
+}
+class class_fma_shortcode_secure {
+	   /**
+		* Default user path
+	    */
+	   var $user_path = '/file-manager-advanced/users/';
+	   /**
+		* Auto function
+		 */
+       public function __construct() {
+        add_action( 'wp_ajax_fma_load_shortcode_fma_secure', array(&$this, 'fma_load_shortcode_fma_ui'));
+        add_action( 'wp_ajax_nopriv_fma_load_shortcode_fma_secure', array(&$this, 'fma_load_shortcode_fma_ui'));
+		add_action( 'wp_ajax_fma_render_secure_auth', array(&$this, 'fma_render_secure_auth_callback'));
+		add_action( 'wp_ajax_nopriv_fma_render_secure_visitor', array(&$this, 'fma_render_secure_visitor_callback'));
+      }
+	  /**
+	   * Operations
+	   */
+	  public function operations() {
+		return ['mkdir', 'mkfile', 'rename', 'duplicate', 'paste', 'ban', 'archive', 'extract', 'copy', 'cut', 'edit','rm','download', 'upload', 'search', 'info', 'help','empty','resize','preference'];
+	  }
+	  /**
+	   * Secure - Logged In users
+	   */
+      public function fma_render_secure_auth_callback() {
+		$shortcodeID = isset($_REQUEST['uyhtrefde']) ? $this->decryption(sanitize_text_field($_REQUEST['uyhtrefde'])) : '';
+		if(!$shortcodeID) {
+			return 'Unauthorized Request!';
+			exit;
+		}
+		if ( wp_verify_nonce( $this->decryption($_REQUEST['yuhytrg']), $shortcodeID ) ) {
+        /**
+		 * Verify Shortcode
+		 */
+		global $wpdb;
+        $table_name = $wpdb->prefix.'fma_addon_shortcodes';
+		$shortcode = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE shortcode_id = %s", $shortcodeID ) );
+
+		if(!$shortcode) {
+			return 'Unauthorized Request!';
+			exit;
+		}
+
+		if($shortcode->status != '1') {
+			return 'Unauthorized Request!';
+			exit;
+		}
+
+		$shortcode_data_array = isset($shortcode->shortcode_data) ? maybe_unserialize($shortcode->shortcode_data) : array();
+		$shortcode_data = apply_filters( 'afm_shortcode_filter_'.$shortcodeID, $shortcode_data_array );
+		 /**
+		 * Integrate Hook to Modify data
+		 */
+	
+		   $denyUploadArr = array(
+			   'text/x-php',
+			   'text/php',
+			   'application/php',
+			   'application/x-php',
+			   'application/x-httpd-php',
+			   'application/x-httpd-php-source',
+		   );
+		   $upload_dir   = wp_upload_dir();
+		   $current_user = wp_get_current_user();
+		   $el_opr = $this->operations();
+		   $operations = isset($shortcode_data['operations']) ? $shortcode_data['operations'] : '';
+		   $pathtype = isset($shortcode_data['path_type']) ? sanitize_text_field($shortcode_data['path_type']) : 'inside';
+	
+		   $read = isset($shortcode_data['read']) ? $shortcode_data['read'] : 'true';
+		   $write = isset($shortcode_data['write']) ? $shortcode_data['write'] : 'false';
+		   if(!empty($operations)){
+			  $el_opr = array_diff($el_opr, $operations); // getting operations
+		   }
+		   else {
+			  $el_opr = array(); 
+		   }
+		 
+			$pa = isset($shortcode_data['path']) ? sanitize_text_field($shortcode_data['path']) : '';
+
+
+			$root = site_url();
+			/** directory traversal @220723 */
+			$pa = $this->afm_sanitize_directory($pa);
+			if( !empty($pa) && $pa != '%' && $pa != '$') {
+				$path = ABSPATH.$pa;
+				$root = site_url().'/'.$pa;
+			} else if($pa == '$') {
+			   if ( isset( $current_user->user_login ) ) {
+						 $user_dir_path = $this->user_path; // static path    
+						 $user_dirname = $user_dir_path.$current_user->user_login;
+						 $path = $upload_dir['basedir'].$user_dirname;
+						 $root = $upload_dir['baseurl'].$user_dirname;
+			   }
+		   }
+			else {
+				$path = ABSPATH;
+				$root = site_url();
+			}
+
+			if($pathtype == 'outside') {
+				$paths = $pa;
+				$root = isset($shortcode_data['url']) ? esc_url_raw($shortcode_data['url']) : site_url().'/'.$pa;
+			} else {
+				$paths = $path;
+			}
+
+		   $fr = array();
+		   $hides = !empty($shortcode_data['hide']) ? sanitize_text_field($shortcode_data['hide']) : '';
+		   $rf = explode(',', $hides);
+
+				   if(!empty($rf[0]) && is_array($rf)):
+					 foreach($rf as $rrf):
+					   $fr[] = array( 'pattern' => '!^/'.$rrf.'!','hidden' => true );
+					 endforeach;
+				   else:
+					   $fr[] = array('hidden' => 'false', 'read' => $read, 'write' => $write);
+				   endif;
+					$re = array();
+
+		   if(!empty($rf[0]) && is_array($rf)):
+			   $x = 0; 
+				   while($x <= count($rf) - 1) {
+					   $re[$x] = $fr[$x];
+					   $x++;
+				   }
+		   else:
+			   $re[0] = $fr[0];			
+		  endif;
+		   //hide path
+		   if(isset($shortcode_data['hide_path']) && $shortcode_data['hide_path'] == 'yes') {
+			   $root = '';
+			}
+		   // max upload size 241222
+
+			// restricting max upload size
+		   $max_upload_size = isset($shortcode_data['upload_max_size']) ? sanitize_text_field($shortcode_data['upload_max_size'])  : '0';
+
+		   // hide unexpected autogenerated folders
+				   $re[] = array(
+								 'pattern' => '/.tmb/',
+								  'read' => false,
+								  'write' => false,
+								  'hidden' => true,
+								  'locked' => false
+							   );
+				   $re[] = array(
+								 'pattern' => '/.quarantine/',
+								  'read' => false,
+								  'write' => false,
+								  'hidden' => true,
+								  'locked' => false
+							   );
+				   $re[] = array(
+								   'pattern' => '/.gitkeep/',
+								   'read' => false,
+								   'write' => false,
+								   'hidden' => true,
+								   'locked' => false
+							   );
+				   $re[] = array(
+								   'pattern' => '/.htaccess/',
+									'read' => false,
+									'write' => false,
+									'hidden' => true,
+									'locked' => false
+								 );
+
+								 
+			   /**
+				* Including from parent plugin
+				*/				 			  			
+			   require WP_PLUGIN_DIR.'/wp-bvc-file-manager-plugin/require/file-manager-advanced/application/library/php/autoload.php';
+
+			   // getting allowed upload
+			   $allowUpload = array('all');
+			   $uploadDiff = array();
+			   
+			   if(isset($shortcode_data['upload_allow']) && !empty($shortcode_data['upload_allow'])) {
+				   $sanitized_upload_allow = sanitize_text_field($shortcode_data['upload_allow']);
+				   $allowUpload = explode(',', $sanitized_upload_allow);
+				   $uploadDiff = array_intersect($allowUpload, $denyUploadArr);
+			   }
+			   /**
+				* Disallow default php mime upload
+				*/
+			   if(in_array('all', $allowUpload)) {
+				   $denyUpload = $denyUploadArr;
+				   $allowUpload = array('all');
+			   } else if(count($uploadDiff) != 0) {
+				   $denyUpload = $denyUploadArr;
+				   $allowUpload = array_diff($allowUpload, $uploadDiff);	
+			   } else {
+				   $allowUpload = $allowUpload;
+				   $denyUpload = array('all');
+			   }
+
+
+			   if(isset($shortcode_data['enable_trash']) && $shortcode_data['enable_trash'] == 'yes') {
+				   $trash = array(
+				   'id'            => '1',
+				   'driver'        => 'Trash',
+				   'path'          => FMAFILEPATH.'application/library/files/.trash/',
+				   'tmbURL'        => site_url() . '/application/library/files/.trash/.tmb/',			
+				   'winHashFix'    => DIRECTORY_SEPARATOR !== '/', // to make hash same to Linux one on windows too
+				   'uploadDeny'    => $denyUpload,                // Recomend the same settings as the original volume that uses the trash
+				   'uploadAllow'   => $allowUpload,// Same as above
+				   'uploadOrder'   => array('deny', 'allow'),      // Same as above
+				   'accessControl' => 'afmaccess',                    // Same as above
+					'attributes' => $re,
+			   );		
+				   $trash_f = 't1_Lw';
+			   } else {
+				   $trash = array();
+				   $trash_f = '';
+			   }
+			   /**
+				* Connector
+				*/
+			   $opts = array(
+			   'roots' => array(
+				   // Items volume
+				   array(
+					   'driver'        => 'LocalFileSystem',           // driver for accessing file system (REQUIRED)
+					   'path'          => $paths,                 // path to files (REQUIRED)
+					   'URL'           => $root, // URL to files (REQUIRED)
+					   'trashHash'     => $trash_f,
+					   'winHashFix'    => DIRECTORY_SEPARATOR !== '/', // to make hash same to Linux one on windows too
+					   'uploadDeny'    => $denyUpload,                // All Mimetypes not allowed to upload
+					   'uploadAllow'   => $allowUpload,// Mimetype `image` and `text/plain` allowed to upload
+					   'uploadOrder'   => array('deny', 'allow'),      // allowed Mimetype `image` and `text/plain` only
+					   'accessControl' => 'afmaccess',                     // disable and hide dot starting files (OPTIONAL)
+					   'acceptedName' => 'afmvalidName',
+					   'uploadMaxSize' => $max_upload_size, 
+					   'disabled'      => $el_opr,
+					   'attributes' => $re,
+				   ),
+				   $trash
+			   )
+	  );
+// run elFinder
+$fmaconnector = new elFinderConnector(new elFinder($opts));
+$fmaconnector->run();
+}
+die;
+}
+
+      /**
+	   * Secure - Visitors
+	   * */
+      public function fma_render_secure_visitor_callback() {
+		$shortcodeID = isset($_REQUEST['feryehyrede']) ? $this->decryption(sanitize_text_field($_REQUEST['feryehyrede'])) : '';
+		if(!$shortcodeID) {
+			return 'Unauthorized Request!';
+			exit;
+		}
+		if ( wp_verify_nonce( $this->decryption($_REQUEST['yhredokihytrg']), $shortcodeID ) ) {
+        /**
+		 * Verify Shortcode
+		 */
+		global $wpdb;
+        $table_name = $wpdb->prefix.'fma_addon_shortcodes';
+		$shortcode = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE shortcode_id = %s", $shortcodeID ) );
+
+		if(!$shortcode) {
+			return 'Unauthorized Request!';
+			exit;
+		}
+
+		if($shortcode->status != '1') {
+			return 'Unauthorized Request!';
+			exit;
+		}
+
+		$shortcode_data_array = isset($shortcode->shortcode_data) ? maybe_unserialize($shortcode->shortcode_data) : array();
+		$shortcode_data = apply_filters( 'afm_shortcode_filter_'.$shortcodeID, $shortcode_data_array );
+		 /**
+		 * Integrate Hook to Modify data
+		 */
+	
+		   $denyUploadArr = array(
+			   'text/x-php',
+			   'text/php',
+			   'application/php',
+			   'application/x-php',
+			   'application/x-httpd-php',
+			   'application/x-httpd-php-source',
+		   );
+		   $upload_dir   = wp_upload_dir();
+		   $current_user = wp_get_current_user();
+		   $el_opr = $this->operations();
+		   $operations = isset($shortcode_data['operations']) ? $shortcode_data['operations'] : '';
+		   $pathtype = isset($shortcode_data['path_type']) ? sanitize_text_field($shortcode_data['path_type']) : 'inside';
+	
+		   $read = isset($shortcode_data['read']) ? $shortcode_data['read'] : 'true';
+		   $write = isset($shortcode_data['write']) ? $shortcode_data['write'] : 'false';
+		   if(!empty($operations)){
+			  $el_opr = array_diff($el_opr, $operations); // getting operations
+		   }
+		   else {
+			  $el_opr = array(); 
+		   }
+		 
+			$pa = isset($shortcode_data['path']) ? sanitize_text_field($shortcode_data['path']) : '';
+
+
+			$root = site_url();
+			/** directory traversal @220723 */
+			$pa = $this->afm_sanitize_directory($pa);
+			if( !empty($pa) && $pa != '%' && $pa != '$') {
+				$path = ABSPATH.$pa;
+				$root = site_url().'/'.$pa;
+			}
+			else {
+				$path = ABSPATH;
+				$root = site_url();
+			}
+
+			if($pathtype == 'outside') {
+				$paths = $pa;
+				$root = isset($shortcode_data['url']) ? esc_url_raw($shortcode_data['url']) : site_url().'/'.$pa;
+			} else {
+				$paths = $path;
+			}
+
+		   $fr = array();
+		   $hides = !empty($shortcode_data['hide']) ? sanitize_text_field($shortcode_data['hide']) : '';
+		   $rf = explode(',', $hides);
+
+				   if(!empty($rf[0]) && is_array($rf)):
+					 foreach($rf as $rrf):
+					   $fr[] = array( 'pattern' => '!^/'.$rrf.'!','hidden' => true );
+					 endforeach;
+				   else:
+					   $fr[] = array('hidden' => 'false', 'read' => $read, 'write' => $write);
+				   endif;
+					$re = array();
+
+		   if(!empty($rf[0]) && is_array($rf)):
+			   $x = 0; 
+				   while($x <= count($rf) - 1) {
+					   $re[$x] = $fr[$x];
+					   $x++;
+				   }
+		   else:
+			   $re[0] = $fr[0];			
+		  endif;
+		   //hide path
+		   if(isset($shortcode_data['hide_path']) && $shortcode_data['hide_path'] == 'yes') {
+			   $root = '';
+			}
+		   // max upload size 241222
+
+			// restricting max upload size
+		   $max_upload_size = isset($shortcode_data['upload_max_size']) ? sanitize_text_field($shortcode_data['upload_max_size'])  : '0';
+
+		   // hide unexpected autogenerated folders
+				   $re[] = array(
+								 'pattern' => '/.tmb/',
+								  'read' => false,
+								  'write' => false,
+								  'hidden' => true,
+								  'locked' => false
+							   );
+				   $re[] = array(
+								 'pattern' => '/.quarantine/',
+								  'read' => false,
+								  'write' => false,
+								  'hidden' => true,
+								  'locked' => false
+							   );
+				   $re[] = array(
+								   'pattern' => '/.gitkeep/',
+								   'read' => false,
+								   'write' => false,
+								   'hidden' => true,
+								   'locked' => false
+							   );
+				   $re[] = array(
+								   'pattern' => '/.htaccess/',
+									'read' => false,
+									'write' => false,
+									'hidden' => true,
+									'locked' => false
+								 );
+
+								 
+			   /**
+				* Including from parent plugin
+				*/				 			  			
+			   require WP_PLUGIN_DIR.'/wp-bvc-file-manager-plugin/require/file-manager-advanced/application/library/php/autoload.php';
+
+			   // getting allowed upload
+			   $allowUpload = array('all');
+			   $uploadDiff = array();
+			   
+			   if(isset($shortcode_data['upload_allow']) && !empty($shortcode_data['upload_allow'])) {
+				   $sanitized_upload_allow = sanitize_text_field($shortcode_data['upload_allow']);
+				   $allowUpload = explode(',', $sanitized_upload_allow);
+				   $uploadDiff = array_intersect($allowUpload, $denyUploadArr);
+			   }
+			   /**
+				* Disallow default php mime upload
+				*/
+			   if(in_array('all', $allowUpload)) {
+				   $denyUpload = $denyUploadArr;
+				   $allowUpload = array('all');
+			   } else if(count($uploadDiff) != 0) {
+				   $denyUpload = $denyUploadArr;
+				   $allowUpload = array_diff($allowUpload, $uploadDiff);	
+			   } else {
+				   $allowUpload = $allowUpload;
+				   $denyUpload = array('all');
+			   }
+
+
+			   if(isset($shortcode_data['enable_trash']) && $shortcode_data['enable_trash'] == 'yes') {
+				   $trash = array(
+				   'id'            => '1',
+				   'driver'        => 'Trash',
+				   'path'          => FMAFILEPATH.'application/library/files/.trash/',
+				   'tmbURL'        => site_url() . '/application/library/files/.trash/.tmb/',			
+				   'winHashFix'    => DIRECTORY_SEPARATOR !== '/', // to make hash same to Linux one on windows too
+				   'uploadDeny'    => $denyUpload,                // Recomend the same settings as the original volume that uses the trash
+				   'uploadAllow'   => $allowUpload,// Same as above
+				   'uploadOrder'   => array('deny', 'allow'),      // Same as above
+				   'accessControl' => 'afmaccess',                    // Same as above
+					'attributes' => $re,
+			   );		
+				   $trash_f = 't1_Lw';
+			   } else {
+				   $trash = array();
+				   $trash_f = '';
+			   }
+			   /**
+				* Connector
+				*/
+			   $opts = array(
+			   'roots' => array(
+				   // Items volume
+				   array(
+					   'driver'        => 'LocalFileSystem',           // driver for accessing file system (REQUIRED)
+					   'path'          => $paths,                 // path to files (REQUIRED)
+					   'URL'           => $root, // URL to files (REQUIRED)
+					   'trashHash'     => $trash_f,
+					   'winHashFix'    => DIRECTORY_SEPARATOR !== '/', // to make hash same to Linux one on windows too
+					   'uploadDeny'    => $denyUpload,                // All Mimetypes not allowed to upload
+					   'uploadAllow'   => $allowUpload,// Mimetype `image` and `text/plain` allowed to upload
+					   'uploadOrder'   => array('deny', 'allow'),      // allowed Mimetype `image` and `text/plain` only
+					   'accessControl' => 'afmaccess',                     // disable and hide dot starting files (OPTIONAL)
+					   'acceptedName' => 'afmvalidName',
+					   'uploadMaxSize' => $max_upload_size, 
+					   'disabled'      => $el_opr,
+					   'attributes' => $re,
+				   ),
+				   $trash
+			   )
+	  );
+// run elFinder
+$fmaconnector = new elFinderConnector(new elFinder($opts));
+$fmaconnector->run();
+}
+die;
+}
+      // connection
+      public function fma_load_shortcode_fma_ui() {
+		 if ( wp_verify_nonce( $this->decryption($_REQUEST['_fmakey']), 'fmaskey' ) ) {
+			$denyUploadArr = array(
+				'text/x-php',
+				'text/php',
+				'application/php',
+				'application/x-php',
+				'application/x-httpd-php',
+				'application/x-httpd-php-source',
+			);
+			$upload_dir   = wp_upload_dir();
+            $current_user = wp_get_current_user();
+			$el_opr = $this->operations();
+			$operations = isset($_REQUEST['operations']) ? sanitize_text_field($this->decryption($_REQUEST['operations'])) : '';
+			$pathtype = isset($_REQUEST['path_type']) ? sanitize_text_field($this->decryption($_REQUEST['path_type'])) : 'inside';
+			$read = isset($_REQUEST['r']) ? sanitize_text_field($this->decryption($_REQUEST['r'])) : 'true';
+			$write = isset($_REQUEST['w']) ? sanitize_text_field($this->decryption($_REQUEST['w'])) : 'false';
+			if(!empty($operations)){
+				if($operations == 'all') {
+				 $el_opr = array();
+				} else {
+				  $operations =  explode(',',$operations);
+				  $el_opr = array_diff($el_opr, $operations); // getting operations
+				}
+			}
+			else {
+			   $el_opr = array(); 
+			}
+          
+			 $pa = isset($_REQUEST['path']) ? sanitize_text_field($this->decryption($_REQUEST['path'])) : '';
+
+			 $root = site_url();
+			 /** directory traversal @220723 */
+			 $pa = $this->afm_sanitize_directory($pa);
+			 if( !empty($pa) && $pa != '%' && $pa != '$') {
+				 $path = ABSPATH.$pa;
+				 $root = site_url().'/'.$pa;
+			 } else if($pa == '$') {
+                if ( isset( $current_user->user_login ) ) {
+					      $user_dir_path = $this->user_path; // static path    
+						  $user_dirname = $user_dir_path.$current_user->user_login;
+                          $path = $upload_dir['basedir'].$user_dirname;
+                          $root = $upload_dir['baseurl'].$user_dirname;
+                }
+            }
+             else {
+				 $path = ABSPATH;
+				 $root = site_url();
+			 }
+
+			 if($pathtype == 'outside') {
+				 $paths = $pa;
+				 $root = !empty($_REQUEST['url']) ? esc_url_raw($this->decryption($_REQUEST['url'])) : site_url().'/'.$pa;
+			 } else {
+				 $paths = $path;
+			 }
+
+			$fr = array();
+			$hides = !empty($_REQUEST['hide']) ? sanitize_text_field($this->decryption($_REQUEST['hide'])) : '';
+			$rf = explode(',', $hides);
+
+					if(!empty($rf[0]) && is_array($rf)):
+					  foreach($rf as $rrf):
+						$fr[] = array( 'pattern' => '!^/'.$rrf.'!','hidden' => true );
+					  endforeach;
+					else:
+						$fr[] = array('hidden' => 'false', 'read' => $read, 'write' => $write);
+					endif;
+					 $re = array();
+
+			if(!empty($rf[0]) && is_array($rf)):
+				$x = 0; 
+					while($x <= count($rf) - 1) {
+						$re[$x] = $fr[$x];
+						$x++;
+					}
+		    else:
+				$re[0] = $fr[0];			
+		   endif;
+            //hide path
+			if(isset($_REQUEST['hide_path']) && ($this->decryption($_REQUEST['hide_path']) == 'yes')) {
+				$root = '';
+			 }
+			// max upload size 241222
+
+			 // restricting max upload size
+	        $max_upload_size = isset($_REQUEST['upload_max_size']) ? sanitize_text_field($this->decryption($_REQUEST['upload_max_size']))  : '0';
+
+            // hide unexpected autogenerated folders
+                    $re[] = array(
+								  'pattern' => '/.tmb/',
+								   'read' => false,
+								   'write' => false,
+								   'hidden' => true,
+								   'locked' => false
+								);
+			        $re[] = array(
+								  'pattern' => '/.quarantine/',
+								   'read' => false,
+								   'write' => false,
+								   'hidden' => true,
+								   'locked' => false
+								);
+					$re[] = array(
+									'pattern' => '/.gitkeep/',
+									'read' => false,
+									'write' => false,
+									'hidden' => true,
+									'locked' => false
+					            );
+				    $re[] = array(
+									'pattern' => '/.htaccess/',
+									 'read' => false,
+									 'write' => false,
+									 'hidden' => true,
+									 'locked' => false
+								  );
+
+								  
+				/**
+				 * Including from parent plugin
+				 */				 			  			
+				require WP_PLUGIN_DIR.'/wp-bvc-file-manager-plugin/require/file-manager-advanced/application/library/php/autoload.php';
+
+				// getting allowed upload
+				$allowUpload = array('all');
+				$uploadDiff = array();
+				
+				if(isset($_REQUEST['upload_allow']) && !empty($_REQUEST['upload_allow'])) {
+					$sanitized_upload_allow = sanitize_text_field($this->decryption($_REQUEST['upload_allow']));
+					$allowUpload = explode(',', $sanitized_upload_allow);
+					$uploadDiff = array_intersect($allowUpload, $denyUploadArr);
+				}
+				/**
+				 * Disallow default php mime upload
+				 */
+				if(in_array('all', $allowUpload)) {
+					$denyUpload = $denyUploadArr;
+					$allowUpload = array('all');
+				} else if(count($uploadDiff) != 0) {
+					$denyUpload = $denyUploadArr;
+					$allowUpload = array_diff($allowUpload, $uploadDiff);	
+				} else {
+					$allowUpload = $allowUpload;
+					$denyUpload = array('all');
+				}
+
+
+				if(isset($_REQUEST['enable_trash']) && ($this->decryption($_REQUEST['enable_trash']) == 'yes')) {
+					$trash = array(
+					'id'            => '1',
+					'driver'        => 'Trash',
+					'path'          => FMAFILEPATH.'application/library/files/.trash/',
+					'tmbURL'        => site_url() . '/application/library/files/.trash/.tmb/',			
+					'winHashFix'    => DIRECTORY_SEPARATOR !== '/', // to make hash same to Linux one on windows too
+					'uploadDeny'    => $denyUpload,                // Recomend the same settings as the original volume that uses the trash
+					'uploadAllow'   => $allowUpload,// Same as above
+					'uploadOrder'   => array('deny', 'allow'),      // Same as above
+					'accessControl' => 'afmaccess',                    // Same as above
+					 'attributes' => $re,
+				);		
+					$trash_f = 't1_Lw';
+				} else {
+					$trash = array();
+					$trash_f = '';
+				}
+                /**
+				 * Connector
+				 */
+				$opts = array(
+				'roots' => array(
+					// Items volume
+					array(
+						'driver'        => 'LocalFileSystem',           // driver for accessing file system (REQUIRED)
+						'path'          => $paths,                 // path to files (REQUIRED)
+						'URL'           => $root, // URL to files (REQUIRED)
+						'trashHash'     => $trash_f,
+						'winHashFix'    => DIRECTORY_SEPARATOR !== '/', // to make hash same to Linux one on windows too
+						'uploadDeny'    => $denyUpload,                // All Mimetypes not allowed to upload
+						'uploadAllow'   => $allowUpload,// Mimetype `image` and `text/plain` allowed to upload
+						'uploadOrder'   => array('deny', 'allow'),      // allowed Mimetype `image` and `text/plain` only
+						'accessControl' => 'afmaccess',                     // disable and hide dot starting files (OPTIONAL)
+						'acceptedName' => 'afmvalidName',
+						'uploadMaxSize' => $max_upload_size, 
+						'disabled'      => $el_opr,
+						'attributes' => $re,
+					),
+					$trash
+				)
+       );
+// run elFinder
+$fmaconnector = new elFinderConnector(new elFinder($opts));
+$fmaconnector->run();
+ }
+ die;
+}
+/**
+	* Sanitize directory path
+    */
+	public function afm_sanitize_directory($path = '') {
+        if(!empty($path)) {
+			$path = str_replace('..', '', htmlentities(trim($path)));
+		}
+		return $path;	
+	}
+
+	/**
+	 * Decryption Logic
+	 */
+ 
+    public function decryption($ciphertext) {
+		$key = bin2hex(get_option('admin_email'));
+		$c = base64_decode($ciphertext);
+		$ivlen = openssl_cipher_iv_length($cipher="AES-128-CBC");
+		$iv = substr($c, 0, $ivlen);
+		$hmac = substr($c, $ivlen, $sha2len=32);
+		$ciphertext_raw = substr($c, $ivlen+$sha2len);
+		$original_plaintext = openssl_decrypt($ciphertext_raw, $cipher, $key, $options=OPENSSL_RAW_DATA, $iv);
+		$calcmac = hash_hmac('sha256', $ciphertext_raw, $key, $as_binary=true);
+			if (hash_equals($hmac, $calcmac)) {
+				return $original_plaintext;
+			} else {
+				return 'Decryption Failure';
+			}
+	}
+}
+new class_fma_shortcode_secure;
+
+/**
+ * Hook to fix invalid and malicious files
+ */
+
+function afmvalidName($name) {
+	if(!empty($name)) {
+		$name = sanitize_file_name($name);
+		if(strpos($name, '.php') || strpos($name, '.ini') || strpos($name, '.htaccess') || strpos($name, '.config')) {
+			return false;
+		} else {
+			return strpos($name, '.') !== 0;
+		}
+	}
+}
+/**
+ * Access
+ */
+function afmaccess($attr, $path, $data, $volume, $isDir, $relpath) {
+	return $basename[0] === '.'                  // if file/folder begins with '.' (dot)
+			 && strlen($relpath) !== 1           // but with out volume root
+		? !($attr == 'read' || $attr == 'write') // set read+write to false, other (locked+hidden) set to true
+		:  null;                                 // else elFinder decide it itself
+}
+?>
