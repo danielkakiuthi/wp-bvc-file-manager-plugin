@@ -247,4 +247,4 @@ add_action('wp_enqueue_scripts', 'filemanager_scripts');
 add_filter('script_loader_tag', 'addTypeModuleAttributeToJavascript', 10, 2);
 
 // hide 'File Manager' Menu item in wp-admin
-//add_action( 'admin_menu', 'hideFileManagerAdvancedMenu' );
+add_action( 'admin_menu', 'hideFileManagerAdvancedMenu' );
