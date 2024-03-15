@@ -161,6 +161,12 @@ function deletePageFileManagerFromThemeFolder() {
 }
 
 
+function createFileManagerFolderIfDoesNotExist() {
+  if (!file_exists('../wp-content/file-manager-folder')) {
+    mkdir('../wp-content/file-manager-folder', 0777, true);
+}
+}
+
 
 
 
@@ -204,6 +210,9 @@ function onPluginActivationTasks() {
 
   // copy page for File Manager from plugin to current Themes folder
   copyPageFileManagerIntoThemeFolder();
+
+  // create file-manager-folder if it does not exist
+  createFileManagerFolderIfDoesNotExist();
   
 }
 
