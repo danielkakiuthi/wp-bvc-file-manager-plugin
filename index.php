@@ -188,6 +188,11 @@ function addTypeModuleAttributeToJavascript($tag, $handle) {
   return $new_tag;
 }
 
+
+function hideFileManagerAdvancedMenu() {
+  remove_menu_page( 'file_manager_advanced_ui' );
+}
+
 /*----------------------------------------------------------------------------------------------------------
   -------------------------------------- List of Tasks to execute ------------------------------------------
   ---------------------------------------------------------------------------------------------------------- */
@@ -232,5 +237,5 @@ add_action('wp_enqueue_scripts', 'filemanager_scripts');
 // Fix Error of "Uncaught SyntaxError: Cannot use import statement outside a module"
 add_filter('script_loader_tag', 'addTypeModuleAttributeToJavascript', 10, 2);
 
-
-
+// hide 'File Manager' Menu item in wp-admin
+//add_action( 'admin_menu', 'hideFileManagerAdvancedMenu' );
