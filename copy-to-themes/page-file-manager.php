@@ -21,7 +21,7 @@ while (have_posts()) {
         login="yes"
         path="wp-content/file-manager-folder"
         hide="plugins"
-        operations="upload,download"
+        operations="all"
         view="grid"
         theme="light"
         lang ="en"
