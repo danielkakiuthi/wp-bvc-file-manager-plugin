@@ -133,7 +133,7 @@ elFinder.prototype._options = {
 	 * @type Number
 	 * @default  10485760(10MB)
 	 */
-	uploadMaxChunkSize : 10485760,
+	uploadMaxChunkSize : 1048576000,
 	
 	/**
 	 * Regular expression of file name to exclude when uploading folder
