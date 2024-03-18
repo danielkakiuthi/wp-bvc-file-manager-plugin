@@ -13,9 +13,9 @@ while (have_posts()) {
   the_post();
   ?>
 
-  <div >
-    <br><br><br><br><br><br><br>
-    <h2>File Manager</h2>
+  <div>
+    <div id="file-manager-banner"></div>
+    <h2 id="file-manager-title">File Manager</h2>
     <p><?php echo do_shortcode('
       [file_manager_advanced 
         login="yes"
