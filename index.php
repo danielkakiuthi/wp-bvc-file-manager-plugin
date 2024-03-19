@@ -162,8 +162,8 @@ function deletePageFileManagerFromThemeFolder() {
 
 
 function createFileManagerFolderIfDoesNotExist() {
-  if (!file_exists('../wp-content/file-manager-folder')) {
-    mkdir('../wp-content/file-manager-folder', 0777, true);
+  if (!file_exists('../file-manager-folder')) {
+    mkdir('../file-manager-folder', 0777, true);
 }
 }
 

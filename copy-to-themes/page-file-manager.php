@@ -19,7 +19,7 @@ while (have_posts()) {
     <p><?php echo do_shortcode('
       [file_manager_advanced 
         login="yes"
-        path="wp-content/file-manager-folder"
+        path="/file-manager-folder"
         hide="plugins"
         operations="all"
         view="grid"
