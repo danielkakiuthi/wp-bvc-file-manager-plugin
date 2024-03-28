@@ -1,8 +1,8 @@
 <?php
 
-if( !is_user_logged_in() ) {
- wp_redirect(esc_url(site_url('/')));
- exit;
+if( !(is_user_logged_in() && get_user_meta( wp_get_current_user()->ID, 'canAccessFileManager', true)==1 ) ) {
+  wp_redirect(esc_url(site_url('/')));
+  exit;
 }
 
 

@@ -3,7 +3,7 @@
 /**
  * Plugin Name: WP BVC - File Manager
  * Description: Implementation of a file manager
- * Version: 2.0
+ * Version: 2.1
  * Author: BVC
  * Author URI: https://github.com/danielkakiuthi/wp-bvc-file-manager-plugin
  */
@@ -69,11 +69,6 @@ require_once( MY_FMAS_PATH . 'file-manager-advanced-shortcode.php' );
 /*----------------------------------------------------------------------------------------------------------
   ----------------------------------------- CUSTOM FUNCTIONS -----------------------------------------------
   ---------------------------------------------------------------------------------------------------------- */
-
-
-
-
-
 
 function createFileManagerPage() {
   $slug = 'file-manager';
@@ -199,6 +194,29 @@ function hideFileManagerAdvancedMenu() {
   remove_menu_page( 'file_manager_advanced_ui' );
 }
 
+
+function showExtraProfileFields( $user ) { 
+  if ( current_user_can( 'administrator' ) ) :?>
+    <h3>Extra Profile Information</h3>
+    <table class="form-table">
+      <tr>
+        <th><label for="canAccessFileManager">Can Access File Manager: </label></th>
+        <td>
+          <input type="checkbox" name="canAccessFileManager" id="canAccessFileManager" value="1" <?php checked(get_the_author_meta( 'canAccessFileManager', $user->ID ), 1); ?> /><br />
+          <span class="description">Choose wether the user can access the File Manager page.</span>
+        </td>
+      </tr>
+    </table>
+<?php endif;
+}
+
+
+function saveExtraProfileFields( $user_id ) {
+	if ( !current_user_can( 'edit_user', $user_id ) )
+		return false;
+	update_usermeta( $user_id, 'canAccessFileManager', $_POST['canAccessFileManager'] );
+}
+
 /*----------------------------------------------------------------------------------------------------------
   -------------------------------------- List of Tasks to execute ------------------------------------------
   ---------------------------------------------------------------------------------------------------------- */
@@ -239,12 +257,28 @@ register_activation_hook(__FILE__, 'onPluginActivationTasks');
 register_deactivation_hook( __FILE__, 'onPluginDeactivationTasks' );
 
 
+/*----------------------------------------------------------------------------------------------------------
+  -------------------------------------------- ADD FILTERS -------------------------------------------------
+  ---------------------------------------------------------------------------------------------------------- */
+
+  // Fix Error of "Uncaught SyntaxError: Cannot use import statement outside a module"
+add_filter('script_loader_tag', 'addTypeModuleAttributeToJavascript', 10, 2);
+
+
+/*----------------------------------------------------------------------------------------------------------
+  -------------------------------------------- ADD ACTIONS -------------------------------------------------
+  ---------------------------------------------------------------------------------------------------------- */
 
 // enqueue scripts (Eg. js, css)
 add_action('wp_enqueue_scripts', 'filemanager_scripts');
 
-// Fix Error of "Uncaught SyntaxError: Cannot use import statement outside a module"
-add_filter('script_loader_tag', 'addTypeModuleAttributeToJavascript', 10, 2);
-
 // hide 'File Manager' Menu item in wp-admin
 add_action( 'admin_menu', 'hideFileManagerAdvancedMenu' );
+
+// display new user custom fields
+add_action( 'show_user_profile', 'showExtraProfileFields' );
+add_action( 'edit_user_profile', 'showExtraProfileFields' );
+
+// save new user custom fields
+add_action( 'personal_options_update', 'saveExtraProfileFields' );
+add_action( 'edit_user_profile_update', 'saveExtraProfileFields' );
