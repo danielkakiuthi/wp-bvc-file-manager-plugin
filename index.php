@@ -196,7 +196,7 @@ function hideFileManagerAdvancedMenu() {
 
 
 function showExtraProfileFields( $user ) { 
-  if ( current_user_can( 'administrator' ) ) :?>
+  if ( current_user_can( 'administrator' ) && wp_get_current_user()->ID==1 ) :?>
     <h3>Extra Profile Information</h3>
     <table class="form-table">
       <tr>
