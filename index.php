@@ -66,6 +66,7 @@ require_once( MY_FMAS_PATH . 'file-manager-advanced-shortcode.php' );
 
 
 
+
 /*----------------------------------------------------------------------------------------------------------
   ----------------------------------------- CUSTOM FUNCTIONS -----------------------------------------------
   ---------------------------------------------------------------------------------------------------------- */
@@ -83,6 +84,7 @@ function createFileManagerPage() {
     'post_type' => 'page',
     'post_status' => 'draft'
   ));
+  
 
   //CASE File Manager Page already exists and is published: do nothing
   if($queryFileManagerPagesPublished->have_posts()) {
